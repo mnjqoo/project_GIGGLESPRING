@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.giggler.giggle.comment">
+
+<!-- 게시글에 해당하는 댓글 갯수 구하기 -->
+	<select id="commentCount" parameterType="Integer" resultType="Integer">
+		<![CDATA[
+			SELECT COUNT(*) FROM comment WHERE post_no = #{post_no}
+		]]>
+	</select>
+	
+	<!-- post_no에 해당하는 댓글 목록 가져오기 -->
+	<select id="commentList" parameterType="Integer" resultType="com.giggler.giggle.dto.CommentDTO">
+		<![CDATA[
+			SELECT cmt.post_no post_no,cmt.comment_no comment_no,u.user_nick user_nick,u.profile_image profile_image,cmt.user_no user_no,cmt.comment_content comment_content,cmt.comment_date comment_date
+			FROM comment cmt,user u
+			WHERE cmt.user_no = u.user_no
+			AND cmt.post_no = #{post_no};
+		]]>
+	</select>
+	
+	<!-- 게시글에 해당하는 댓글 등록하기 -->
+	<insert id="commentRegister" parameterType="com.giggler.giggle.dto.CommentDTO">
+		<![CDATA[
+			INSERT INTO comment ( post_no, user_no, comment_content, comment_date)
+			 VALUES  (#{post_no}, #{user_no}, #{comment_content}, now())
+		]]>		
+	</insert>
+	
+	<!-- 게시글 번호에 해당하는 게시글의 댓글 수 증가 -->
+	<update id="updateCommentCnt" parameterType="Integer">
+	<![CDATA[
+	UPDATE post SET comment_cnt = comment_cnt + 1
+	WHERE post_no = #{post_no}
+	]]>
+	</update>
+	
+	<!-- 게시글 번호로 게시글정보 가져오기 -->
+	<select id="getPostDTO" parameterType="Integer" resultType="com.giggler.giggle.dto.PostDTO">
+		Select * FROM post
+		WHERE post_no = #{post_no}
+	</select>
+	
+	<!-- 댓글에 해당하는 알람 등록하기 -->
+	<insert id="insertAlarmCnt" parameterType="com.giggler.giggle.dto.CommentDTO">
+	<![CDATA[
+	INSERT INTO alarm (user_no, alarm_user, alarm_type, alarm_date, post_no)
+	VALUES ((SELECT user_no FROM post WHERE post_no = #{post_no}), #{user_no},"3",now(),#{post_no})	
+	]]>
+	</insert>
+	
+	<update id="updateAlarmYn" parameterType="com.giggler.giggle.dto.CommentDTO">	
+	<![CDATA[
+	UPDATE user set alarm_yn = "Y" WHERE user_no = (SELECT user_no from post WHERE post_no = #{post_no})
+	]]>
+	</update>
+	
+	<!-- 게시글에 해당하는 댓글 삭제하기 -->
+	<delete id="commentDelete" parameterType="int">
+		<![CDATA[
+		DELETE FROM comment WHERE comment_no = #{comment_no}
+		]]>
+	</delete>
+	<!-- 게시글 번호에 해당하는 게시글의 댓글 수 감소 -->
+   <update id="deleteCommentCnt" parameterType="com.giggler.giggle.dto.CommentDTO">
+   <![CDATA[
+   UPDATE post SET comment_cnt = comment_cnt - 1
+   WHERE post_no = #{post_no}
+   ]]>
+   </update>
+	
+	</mapper>
